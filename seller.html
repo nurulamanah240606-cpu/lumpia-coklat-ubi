@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Penjual - LUCABI Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
+        body { background: #f4f6f9; color: #333; }
+        .header { background: #3D2314; color: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; }
+        .container { padding: 30px 5%; }
+        .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 25px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card h3 { margin-bottom: 15px; color: #3D2314; border-bottom: 2px solid #f0f0f0; padding-bottom: 8px; }
+        .form-control { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; }
+        .btn { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .btn-success { background: #556B2F; color: white; }
+        .btn-warning { background: #E89B27; color: white; }
+        .btn-danger { background: #D9531E; color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; border: 1px solid #e0e0e0; text-align: left; font-size: 0.85rem; }
+        th { background: #FAF6F0; color: #3D2314; }
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
+        .badge-pending { background: #fff3cd; color: #856404; }
+        .badge-done { background: #d4edda; color: #155724; }
+        .img-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; }
+        .banner-preview { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
+        .proof-img { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2><i class="fa-solid fa-store"></i> DASHBOARD PENJUAL LUCABI</h2>
+        <span>Kelola Gambar, Produk & Pesanan Masuk</span>
+    </div>
+
+    <div class="container">
+        <div class="grid">
+            <!-- Sisi Kiri: Edit Gambar Utama & Edit Produk Menu -->
+            <div>
+                <!-- FITUR BARU: EDIT GAMBAR UTAMA WEBSITE -->
+                <div class="card">
+                    <h3><i class="fa-solid fa-image"></i> Gambar Awal & Banner Website</h3>
+                    
+                    <label style="font-size:0.85rem; font-weight:bold;">1. Gambar Hero Utama (Atas):</label>
+                    <img id="previewHero" src="" class="banner-preview">
+                    <input type="text" id="inputHeroImg" class="form-control" placeholder="URL Gambar Hero baru">
+                    
+                    <label style="font-size:0.85rem; font-weight:bold;">2. Gambar About Us (Tentang Kami):</label>
+                    <img id="previewAbout" src="" class="banner-preview">
+                    <input type="text" id="inputAboutImg" class="form-control" placeholder="URL Gambar About baru">
+
+                    <button onclick="saveBanners()" class="btn btn-success" style="width:100%;"><i class="fa-solid fa-floppy-disk"></i> Simpan Gambar Utama</button>
+                </div>
+
+                <!-- Kelola Produk Menu -->
+                <div class="card">
+                    <h3><i class="fa-solid fa-boxes-stacked"></i> Kelola & Edit Menu</h3>
+                    <div id="productEditList">
+                        <!-- Render via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sisi Kanan: Daftar Pesanan Masuk -->
+            <div>
+                <div class="card">
+                    <h3><i class="fa-solid fa-list-check"></i> Daftar Pesanan Masuk (Realtime)</h3>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID / Waktu</th>
+                                    <th>Pembeli & WA</th>
+                                    <th>Pesanan</th>
+                                    <th>Alamat / Maps</th>
+                                    <th>Bayar</th>
+                                    <th>Bukti Transfer</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orderTableBody">
+                                <!-- Render via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const defaultProducts = [
+            { id: 1, name: "LUCABI Original", price: 10000, stock: 30, image: "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?auto=format&fit=crop&w=500&q=80" },
+            { id: 2, name: "LUCABI Choco Crunch", price: 10000, stock: 25, image: "https://images.unsplash.com/photo-1621263764928-df1444c5e859?auto=format&fit=crop&w=500&q=80" },
+            { id: 3, name: "LUCABI Choco Cheese", price: 10000, stock: 20, image: "https://images.unsplash.com/photo-1579372786545-d24232daf58c?auto=format&fit=crop&w=500&q=80" }
+        ];
+
+        // Load Gambar Utama/Banner
+        function loadBannersAdmin() {
+            const heroImg = localStorage.getItem('lucabi_hero_img') || "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?auto=format&fit=crop&w=800&q=80";
+            const aboutImg = localStorage.getItem('lucabi_about_img') || "https://images.unsplash.com/photo-1621263764928-df1444c5e859?auto=format&fit=crop&w=800&q=80";
+
+            document.getElementById('previewHero').src = heroImg;
+            document.getElementById('inputHeroImg').value = heroImg;
+
+            document.getElementById('previewAbout').src = aboutImg;
+            document.getElementById('inputAboutImg').value = aboutImg;
+        }
+
+        // Simpan Gambar Utama Baru
+        function saveBanners() {
+            const newHero = document.getElementById('inputHeroImg').value;
+            const newAbout = document.getElementById('inputAboutImg').value;
+
+            localStorage.setItem('lucabi_hero_img', newHero);
+            localStorage.setItem('lucabi_about_img', newAbout);
+
+            alert('Gambar Banner Utama Berhasil Diperbarui!');
+            loadBannersAdmin();
+        }
+
+        function getProducts() {
+            return JSON.parse(localStorage.getItem('lucabi_products')) || defaultProducts;
+        }
+
+        function renderProductsAdmin() {
+            const products = getProducts();
+            const container = document.getElementById('productEditList');
+            container.innerHTML = '';
+
+            products.forEach((p, index) => {
+                container.innerHTML += `
+                    <div style="border:1px solid #ddd; padding:12px; border-radius:8px; margin-bottom:12px;">
+                        <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
+                            <img src="${p.image}" class="img-preview">
+                            <strong>${p.name}</strong>
+                        </div>
+                        <label style="font-size:0.8rem;">Harga (Rp):</label>
+                        <input type="number" class="form-control" id="prod-price-${index}" value="${p.price}">
+                        
+                        <label style="font-size:0.8rem;">Stok Sisa:</label>
+                        <input type="number" class="form-control" id="prod-stock-${index}" value="${p.stock}">
+                        
+                        <label style="font-size:0.8rem;">URL Gambar Produk:</label>
+                        <input type="text" class="form-control" id="prod-img-${index}" value="${p.image}">
+                        
+                        <button onclick="saveProductEdit(${index})" class="btn btn-warning" style="width:100%;">Update Produk Menu</button>
+                    </div>
+                `;
+            });
+        }
+
+        function saveProductEdit(index) {
+            let products = getProducts();
+            products[index].price = parseInt(document.getElementById(`prod-price-${index}`).value);
+            products[index].stock = parseInt(document.getElementById(`prod-stock-${index}`).value);
+            products[index].image = document.getElementById(`prod-img-${index}`).value;
+
+            localStorage.setItem('lucabi_products', JSON.stringify(products));
+            alert('Data produk menu berhasil diperbarui!');
+            renderProductsAdmin();
+        }
+
+        function renderOrdersAdmin() {
+            const orders = JSON.parse(localStorage.getItem('lucabi_orders') || '[]');
+            const tableBody = document.getElementById('orderTableBody');
+            tableBody.innerHTML = '';
+
+            if(orders.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Belum ada pesanan masuk.</td></tr>`;
+                return;
+            }
+
+            orders.forEach((o, index) => {
+                let proofHTML = o.proofImg 
+                    ? `<a href="${o.proofImg}" target="_blank"><img src="${o.proofImg}" class="proof-img"></a>` 
+                    : `<span style="color:#999; font-size:0.75rem;">Tidak ada (COD)</span>`;
+
+                tableBody.innerHTML += `
+                    <tr>
+                        <td>
+                            <strong>${o.id}</strong><br>
+                            <span style="font-size:0.75rem; color:#666;">${o.date}</span>
+                        </td>
+                        <td>
+                            <strong>${o.name}</strong><br>
+                            <a href="https://wa.me/${o.wa.replace(/^0/, '62')}" target="_blank" style="color:green;"><i class="fa-brands fa-whatsapp"></i> ${o.wa}</a>
+                        </td>
+                        <td>
+                            ${o.qty}x ${o.menu}<br>
+                            <strong>Total: Rp${o.totalPrice.toLocaleString('id-ID')}</strong><br>
+                            <em style="font-size:0.75rem; color:#555;">Catatan: ${o.note || '-'}</em>
+                        </td>
+                        <td>
+                            <a href="${o.location.startsWith('http') ? o.location : 'https://maps.google.com/?q=' + encodeURIComponent(o.location)}" target="_blank" style="color:#0066cc;">
+                                <i class="fa-solid fa-map-pin"></i> Buka Location Maps
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge ${o.payment === 'Transfer' ? 'badge-done' : 'badge-pending'}">${o.payment}</span>
+                        </td>
+                        <td>${proofHTML}</td>
+                        <td>
+                            <button onclick="deleteOrder(${index})" class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;"><i class="fa-solid fa-trash"></i> Hapus</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function deleteOrder(index) {
+            if(confirm('Apakah Anda yakin ingin menghapus data pesanan ini?')) {
+                let orders = JSON.parse(localStorage.getItem('lucabi_orders') || '[]');
+                orders.splice(index, 1);
+                localStorage.setItem('lucabi_orders', JSON.stringify(orders));
+                renderOrdersAdmin();
+            }
+        }
+
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'lucabi_orders') {
+                renderOrdersAdmin();
+            }
+        });
+
+        // Initial Load
+        loadBannersAdmin();
+        renderProductsAdmin();
+        renderOrdersAdmin();
+    </script>
+</body>
+</html>
